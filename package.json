@@ -1,0 +1,42 @@
+{
+  "name": "@rest-flow/architect",
+  "version": "1.0.0",
+  "bin": {
+    "@resflow/architect": "./bin/architect.js"
+  },
+  "type": "module",
+  "scripts": {
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "start": "node index.js",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "description": "",
+  "standard": {
+    "includes": [
+      "test"
+    ],
+    "ignore": [
+      "dist"
+    ]
+  },
+  "devDependencies": {
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
+    "standard": "^17.1.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@devnetic/utils": "^2.2.0",
+    "pluralize": "^8.0.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
+}
