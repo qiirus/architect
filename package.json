@@ -6,7 +6,7 @@
   },
   "type": "module",
   "scripts": {
-    "lint": "standard",
+    "lint": "standard | snazzy \"src/**/*.js\" node_modules",
     "lint:fix": "standard --fix",
     "start": "node index.js",
     "prepare": "husky"
@@ -15,14 +15,6 @@
   "author": "",
   "license": "MIT",
   "description": "",
-  "standard": {
-    "includes": [
-      "test"
-    ],
-    "ignore": [
-      "dist"
-    ]
-  },
   "devDependencies": {
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
@@ -32,7 +24,9 @@
   },
   "dependencies": {
     "@devnetic/utils": "^2.2.0",
-    "pluralize": "^8.0.0"
+    "pluralize": "^8.0.0",
+    "snazzy": "^9.0.0",
+    "unzipper": "^0.12.3"
   },
   "config": {
     "commitizen": {
