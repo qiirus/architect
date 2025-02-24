@@ -51,7 +51,8 @@ export const generateSchema = (dirPath, domain) => {
       `export const Id${schemaName}Schema = pick(Select${schemaName}Schema, ['id'])`,
       `export const Update${schemaName}Schema = partial(Create${schemaName}Schema)`,
       '',
-      `registerSchema('${domainName}', '${schemaName}', ${schemaName}Schema)`,
+      // `registerSchema('${domainName}', '${schemaName}', ${schemaName}Schema)`,
+      `registerSchema('${schemaName}', ${schemaName}Schema)`,
       ''
     ]
 
