@@ -47,11 +47,12 @@ export const setupApplication = async (appName, applicationPath) => {
 
 const setupDocker = async (appName, applicationPath) => {
   const nodeVersion = await getNodeVersion()
-  const postgresVersion = await getPostgresVersion()
+  const nodeImageVersion = await getNodeImageVersion(nodeVersion.slice(1))
+  const postgresImageVersion = await getPostgresImageVersion()
 
   await replaceConstant(
     'NODE_LTS_VERSION',
-    nodeVersion,
+    nodeImageVersion,
     join(applicationPath, 'Dockerfile')
   )
 
@@ -68,8 +69,8 @@ const setupDocker = async (appName, applicationPath) => {
   )
 
   await replaceConstant(
-    'DATABASE_PROVIDER_VERSION',
-    postgresVersion,
+    'DATABASE_IMAGE_VERSION',
+    postgresImageVersion,
     join(applicationPath, 'docker-compose.override.yml')
   )
 }
@@ -97,7 +98,7 @@ const installDependencies = (dependencies, applicationPath) => {
   return execSync(`npm i ${dependencies.join(' ')} --prefix ${applicationPath}`)
 }
 
-const getPostgresVersion = async () => {
+const getPostgresImageVersion = async () => {
   const repo = 'library/postgres'
   const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100`
 
@@ -123,6 +124,38 @@ const getPostgresVersion = async () => {
 
     console.log('Latest PostgreSQL Alpine version:', alpineTags[0])
     return alpineTags[0]
+  } catch (error) {
+    console.error('Error fetching tags:', error)
+  }
+}
+
+const getNodeImageVersion = async (nodeVersion) => {
+  const repo = 'library/node'
+  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100`
+
+  try {
+    const response = await fetch(url)
+    const data = await response.json()
+
+    if (!data.results) {
+      throw new Error('No results found')
+    }
+
+    // Filter tags that match the pattern X.Y-alpineX.YY
+    const alpineTags = data.results
+      .map(tag => tag.name)
+      .filter(name => /\d+\.\d+-alpine\d+\.\d+/.test(name))
+
+    if (alpineTags.length === 0) {
+      throw new Error('No Alpine versions found')
+    }
+
+    // Sort versions numerically
+    alpineTags.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+
+    return alpineTags.find(version => {
+      return version.includes(nodeVersion)
+    })
   } catch (error) {
     console.error('Error fetching tags:', error)
   }

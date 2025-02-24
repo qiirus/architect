@@ -8,8 +8,8 @@ import {
 
 const main = async () => {
   // Parse command-line arguments
-  const args = process.argv.slice(2)
-  // const args = ['-n', 'app-api']
+  // const args = process.argv.slice(2)
+  const args = ['-n', 'app-api']
 
   if (args.length < 2) {
     displayUsage()
@@ -22,6 +22,8 @@ const main = async () => {
 
   // console.log('cwd: %o', process.cwd())
   // console.log('dirname: %o', import.meta.dirname)
+
+  // process.exit(1)
 
   switch (option) {
     case '-d':

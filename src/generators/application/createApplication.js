@@ -11,8 +11,8 @@ import { writeEntries } from './writeEntries.js'
  * @param {string} currentPath
  */
 export const createApplication = async (name, currentPath) => {
-  const frameworkUrl = 'https://github.com/rest-flow/framework/archive/refs/heads/feat/initial-setup.zip'
-  // const frameworkUrl = 'https://codeload.github.com/rest-flow/framework/zip/refs/heads/feat/initial-setup'
+  // const frameworkUrl = 'https://github.com/rest-flow/framework/archive/refs/heads/feat/initial-setup.zip'
+  const frameworkUrl = 'http://localhost:5500/framework.zip'
 
   try {
     const entries = await downloadFramework(frameworkUrl)

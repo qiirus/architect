@@ -4,7 +4,7 @@ import { appendFileSync, existsSync, writeFileSync } from 'node:fs'
 import { camelCase, kebabCase, pascalCase } from '@devnetic/utils'
 import pluralize from 'pluralize'
 
-import { createFile } from '../../utils/fileSystem/createFile.js'
+import { createFile, getSchemaTag } from '../../utils/index.js'
 
 /**
  *
@@ -14,7 +14,7 @@ import { createFile } from '../../utils/fileSystem/createFile.js'
  */
 export const generateRoutes = (dirPath, domain) => {
   const filename = join(dirPath, `${domain}.routes.js`)
-  const schemaName = pascalCase(pluralize.singular(domain))
+  const schemaName = getSchemaTag(pascalCase(pluralize.singular(domain)))
   const endpointName = kebabCase(domain)
 
   createFile(filename)
