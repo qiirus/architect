@@ -1,19 +1,17 @@
 import { dirname, join } from 'node:path'
-import { appendFileSync, existsSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync } from 'node:fs'
 
 import { camelCase, pascalCase, snakeCase } from '@devnetic/utils'
 import pluralize from 'pluralize'
 
 import { createFile } from '../../utils/index.js'
 
-export const generateSchema = (dirPath, domain) => {
-  const filename = join(dirPath, `${domain}.schema.js`)
-  const domainName = camelCase(domain)
-  const schemaName = pascalCase(pluralize.singular(domain))
+export const generateSchema = (domainName, domainPath) => {
+  const filepath = join(domainPath, `${domainName}.schema.js`)
+  const tableName = camelCase(domainName)
+  const schemaName = pascalCase(pluralize.singular(domainName))
 
-  createFile(filename)
-
-  if (existsSync(filename)) {
+  if (!existsSync(filepath)) {
     const content = [
       'import {',
       '  pgTable,',
@@ -27,7 +25,7 @@ export const generateSchema = (dirPath, domain) => {
       "import { pick } from '../../common/schema/pick.js'",
       "import { registerSchema } from '../../common/schema/registry.js'",
       '',
-      `export const ${domainName} = pgTable('${snakeCase(domain)}', {`,
+      `export const ${tableName} = pgTable('${snakeCase(domainName)}', {`,
       "  id: uuid('id').primaryKey().defaultRandom().notNull(),",
       "  created_at: timestamp('created_at', { precision: 6, withTimezone: true })",
       '    .defaultNow()',
@@ -37,7 +35,7 @@ export const generateSchema = (dirPath, domain) => {
       '    .notNull()',
       '})',
       '',
-      `const selectSchema = createSelectSchema(${domainName})`,
+      `const selectSchema = createSelectSchema(${tableName})`,
       '',
       `export const Select${schemaName}Schema = partial(selectSchema)`,
       `export const Create${schemaName}Schema = omit(selectSchema, [`,
@@ -55,10 +53,10 @@ export const generateSchema = (dirPath, domain) => {
       ''
     ]
 
-    writeFileSync(filename, content.join('\n'))
+    createFile(filepath, content.join('\n'))
 
-    const schemasFilename = join(dirname(dirPath), 'schemas.js')
-    const schemaPath = join(`${domain}`, `${domain}.schema.js`)
+    const schemasFilename = join(dirname(domainPath), 'schemas.js')
+    const schemaPath = join(`${domainName}`, `${domainName}.schema.js`)
 
     appendFileSync(schemasFilename, `export * from './${schemaPath}'\n`)
   }

@@ -1,18 +1,16 @@
 import { join } from 'node:path'
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 
 import { pascalCase } from '@devnetic/utils'
 import pluralize from 'pluralize'
 
 import { createFile } from '../../utils/index.js'
 
-export const generateValidations = (dirPath, domain) => {
-  const validationPath = join(dirPath, `${domain}.validation.js`)
-  const schemaName = pascalCase(pluralize.singular(domain))
+export const generateValidations = (domainName, domainPath) => {
+  const validationPath = join(domainPath, `${domainName}.validation.js`)
+  const schemaName = pascalCase(pluralize.singular(domainName))
 
-  createFile(validationPath)
-
-  if (existsSync(validationPath)) {
+  if (!existsSync(validationPath)) {
     const content = [
       'import {',
       '  REQUEST_SEGMENTS,',
@@ -30,38 +28,38 @@ export const generateValidations = (dirPath, domain) => {
       "} from './index.js'",
       '',
       'export const validations = {',
-      `  // POST /${domain}`,
+      `  // POST /${domainName}`,
       '  create: {',
       `    [REQUEST_SEGMENTS.BODY]: Create${schemaName}Schema,`,
       `    [REQUEST_SEGMENTS.RESPONSE]: createResponseSchema({ $ref: '${schemaName}' })`,
       '  },',
       '',
-      `  // DELETE /${domain}/:id`,
+      `  // DELETE /${domainName}/:id`,
       '  delete: {',
       `    [REQUEST_SEGMENTS.PARAMS]: Id${schemaName}Schema,`,
       '    [REQUEST_SEGMENTS.RESPONSE]: createDeleteByIdResponseSchema()',
       '  },',
       '',
-      `  // GET /${domain}`,
+      `  // GET /${domainName}`,
       '  getAll: {',
       '    [REQUEST_SEGMENTS.QUERY]: createQuerySchema(),',
       `    [REQUEST_SEGMENTS.RESPONSE]: createAllResponseSchema(Select${schemaName}Schema)`,
       '  },',
       '',
-      `  // GET /${domain}/:id`,
+      `  // GET /${domainName}/:id`,
       '  getById: {',
       `    [REQUEST_SEGMENTS.PARAMS]: Id${schemaName}Schema,`,
       `    [REQUEST_SEGMENTS.RESPONSE]: createByIdResponseSchema({ $ref: '${schemaName}' })`,
       '  },',
       '',
-      `  // PATCH /${domain}/:id`,
+      `  // PATCH /${domainName}/:id`,
       '  patch: {',
       `    [REQUEST_SEGMENTS.PARAMS]: Id${schemaName}Schema,`,
       `    [REQUEST_SEGMENTS.BODY]: Update${schemaName}Schema,`,
       `    [REQUEST_SEGMENTS.RESPONSE]: createByIdResponseSchema({ $ref: '${schemaName}' })`,
       '  },',
       '',
-      `  // PUT /${domain}/:id`,
+      `  // PUT /${domainName}/:id`,
       '  put: {',
       `    [REQUEST_SEGMENTS.PARAMS]: Id${schemaName}Schema,`,
       `    [REQUEST_SEGMENTS.BODY]: Create${schemaName}Schema,`,
@@ -69,8 +67,8 @@ export const generateValidations = (dirPath, domain) => {
       '  }',
       '}',
       ''
-    ].join('\n')
+    ]
 
-    writeFileSync(validationPath, content)
+    createFile(validationPath, content.join('\n'))
   }
 }

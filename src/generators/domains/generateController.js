@@ -1,22 +1,20 @@
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { createFile } from '../../utils/index.js'
 
-export const generateController = (dirPath, domain) => {
-  const controllerPath = join(dirPath, `${domain}.controller.js`)
+export const generateController = (domainName, domainPath) => {
+  const filePath = join(domainPath, `${domainName}.controller.js`)
 
-  createFile(controllerPath)
-
-  if (existsSync(controllerPath)) {
+  if (!existsSync(filePath)) {
     const content = [
       'import { baseController } from \'../../common/index.js\'',
-      `import { model } from './${domain}.model.js'`,
+      `import { model } from './${domainName}.model.js'`,
       '',
       'export const controller = baseController(model)',
       ''
     ]
 
-    writeFileSync(controllerPath, content.join('\n'))
+    createFile(filePath, content.join('\n'))
   }
 }

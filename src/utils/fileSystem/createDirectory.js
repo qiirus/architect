@@ -5,16 +5,22 @@ import { colorize, GREEN, YELLOW } from '../colorize.js'
 /**
  *
  * @param {string} dirPath
+ * @param {boolean} [silence=false]
  * @returns {boolean}
  */
-export const createDirectory = (dirPath) => {
+export const createDirectory = (dirPath, silence = false) => {
   if (!existsSync(dirPath)) {
     mkdirSync(dirPath, { recursive: true })
-    console.log(colorize(`Directory '${dirPath}' created.`, GREEN))
+
+    if (silence === false) {
+      console.log(colorize(`Directory '${dirPath}' created.`, GREEN))
+    }
 
     return true
   } else {
-    console.log(colorize(`Directory '${dirPath}' already exists.`, YELLOW))
+    if (silence === false) {
+      console.log(colorize(`Directory '${dirPath}' already exists.`, YELLOW))
+    }
 
     return false
   }

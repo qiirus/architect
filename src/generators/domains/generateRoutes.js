@@ -1,5 +1,5 @@
 import { dirname, join } from 'node:path'
-import { appendFileSync, existsSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync } from 'node:fs'
 
 import { camelCase, kebabCase, pascalCase } from '@devnetic/utils'
 import pluralize from 'pluralize'
@@ -12,62 +12,60 @@ import { createFile, getSchemaTag } from '../../utils/index.js'
  * @param {string} domain
  * @returns {void}
  */
-export const generateRoutes = (dirPath, domain) => {
-  const filename = join(dirPath, `${domain}.routes.js`)
-  const schemaName = getSchemaTag(pascalCase(pluralize.singular(domain)))
-  const endpointName = kebabCase(domain)
+export const generateRoutes = (domainName, domainPath) => {
+  const filePath = join(domainPath, `${domainName}.routes.js`)
+  const tagName = getSchemaTag(pascalCase(pluralize.singular(domainName)))
+  const endpointName = kebabCase(domainName)
 
-  createFile(filename)
-
-  if (existsSync(filename)) {
+  if (!existsSync(filePath)) {
     const content = [
-      `import { controller } from './${domain}.controller.js'`,
-      `import { validations } from './${domain}.validation.js'`,
+      `import { controller } from './${domainName}.controller.js'`,
+      `import { validations } from './${domainName}.validation.js'`,
       '',
-      `export const ${camelCase(domain)}Routes = async (app) => {`,
+      `export const ${camelCase(domainName)}Routes = async (app) => {`,
       '  app.post(',
       `    '/${endpointName}',`,
-      `    { schema: { ...validations.create, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.create, tags: ['${tagName}'] } },`,
       '    controller.create',
       '  )',
       '',
       '  app.get(',
       `    '/${endpointName}',`,
-      `    { schema: { ...validations.getAll, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.getAll, tags: ['${tagName}'] } },`,
       '    controller.getAll',
       '  )',
       '',
       '  app.get(',
       `    '/${endpointName}/:id',`,
-      `    { schema: { ...validations.getById, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.getById, tags: ['${tagName}'] } },`,
       '    controller.getById',
       '  )',
       '',
       '  app.delete(',
       `    '/${endpointName}/:id',`,
-      `    { schema: { ...validations.delete, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.delete, tags: ['${tagName}'] } },`,
       '    controller.deleteById',
       '  )',
       '',
       '  app.patch(',
       `    '/${endpointName}/:id',`,
-      `    { schema: { ...validations.patch, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.patch, tags: ['${tagName}'] } },`,
       '    controller.patch',
       '  )',
       '',
       '  app.put(',
       `    '/${endpointName}/:id',`,
-      `    { schema: { ...validations.put, tags: ['${schemaName}'] } },`,
+      `    { schema: { ...validations.put, tags: ['${tagName}'] } },`,
       '    controller.update',
       '  )',
       '}',
       ''
     ]
 
-    writeFileSync(filename, content.join('\n'))
+    createFile(filePath, content.join('\n'))
 
-    const routesFilename = join(dirname(dirPath), 'routes.js')
-    const routesPath = join(`${domain}`, `${domain}.routes.js`)
+    const routesFilename = join(dirname(domainPath), 'routes.js')
+    const routesPath = join(`${domainName}`, `${domainName}.routes.js`)
 
     appendFileSync(routesFilename, `export * from './${routesPath}'\n`)
   }

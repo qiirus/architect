@@ -9,7 +9,7 @@ import { writeFile, mkdir } from 'node:fs/promises'
  */
 export const writeEntries = async (currentPath, entries) => {
   for (const [name, entry] of Object.entries(entries)) {
-    console.log(name, entry.size, entry.isDirectory)
+    // console.log(name, entry.size, entry.isDirectory)
 
     if (entry.isDirectory) {
       await mkdir(join(currentPath, name), { recursive: true })

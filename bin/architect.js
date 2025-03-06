@@ -8,8 +8,9 @@ import {
 
 const main = async () => {
   // Parse command-line arguments
-  // const args = process.argv.slice(2)
-  const args = ['-n', 'app-api']
+  const args = process.argv.slice(2)
+  // const args = ['-d', 'users']
+  // const args = ['-n', 'rest-api']
 
   if (args.length < 2) {
     displayUsage()
@@ -19,6 +20,11 @@ const main = async () => {
 
   const option = args[0]
   const parameter = args[1]
+  const currentPath = process.cwd()
+  console.log(process.cwd())
+  // process.exit(1)
+
+  // const currentPath = '/home/aagamezl/workspace/personal/git-repos/rest-flow/experiments/rest-api'
 
   // console.log('cwd: %o', process.cwd())
   // console.log('dirname: %o', import.meta.dirname)
@@ -27,15 +33,13 @@ const main = async () => {
 
   switch (option) {
     case '-d':
-      generateDomain(parameter)
+      generateDomain(parameter, currentPath)
 
       break
     case '-n':
       // generateApplication(parameter, process.cwd(), import.meta.dirname)
       try {
-        await createApplication(parameter, process.cwd())
-
-        console.log('Download and unzip completed!')
+        await createApplication(parameter, currentPath)
       } catch (error) {
         console.error('Error:', error)
       }

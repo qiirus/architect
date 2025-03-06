@@ -1,6 +1,11 @@
+import { exec } from 'node:child_process'
 import { join } from 'node:path'
-import { writeFile, readFile } from 'node:fs/promises'
-import { execSync } from 'node:child_process'
+import { promisify } from 'node:util'
+import { readFile, rename, writeFile } from 'node:fs/promises'
+
+import { config } from '../../../config/index.js'
+import { colorize, CYAN } from '../../utils/colorize.js'
+
 /**
  *
  * @param {string} name
@@ -39,16 +44,54 @@ export const setupApplication = async (appName, applicationPath) => {
 
   await replaceConstant('APP_NAME', appName, packagePath)
 
-  installDependencies(dependencies, applicationPath)
-  installDependencies(devDependencies, applicationPath)
-
+  console.log(colorize('Configuring Docker/Docker Compose.', CYAN))
   await setupDocker(appName, applicationPath)
+
+  console.log(colorize('Defining application configuration.', CYAN))
+  await setupConfig(appName, applicationPath)
+
+  console.log(colorize('Installing NPM dependencies.', CYAN))
+  await installDependencies(dependencies, applicationPath)
+
+  console.log(colorize('Installing NPM dev dependencies.', CYAN))
+  await installDependencies(devDependencies, applicationPath)
 }
 
+/**
+ *
+ * @param {string} appName
+ * @param {string} applicationPath
+ * @returns {void}
+ */
+const setupConfig = async (appName, applicationPath) => {
+  await replaceConstant(
+    'APP_NAME',
+    appName,
+    join(applicationPath, 'config/index.js')
+  )
+
+  await replaceConstant(
+    'APP_DESCRIPTION',
+    `Description for ${appName} OpenAPI Specification`,
+    join(applicationPath, 'config/index.js')
+  )
+}
+
+/**
+ *
+ * @param {string} appName
+ * @param {string} applicationPath
+ * @returns {void}
+ */
 const setupDocker = async (appName, applicationPath) => {
   const nodeVersion = await getNodeVersion()
-  const nodeImageVersion = await getNodeImageVersion(nodeVersion.slice(1))
+  const nodeImageVersion = await getNodeImageVersion(nodeVersion)
   const postgresImageVersion = await getPostgresImageVersion()
+
+  await rename(
+    join(applicationPath, 'docker-compose.override.yml.dist'),
+    join(applicationPath, 'docker-compose.override.yml')
+  )
 
   await replaceConstant(
     'NODE_LTS_VERSION',
@@ -57,20 +100,44 @@ const setupDocker = async (appName, applicationPath) => {
   )
 
   await replaceConstant(
-    'DATABASE_CONTAINER_NAME',
-    `${appName}-database`,
+    'API_CONTAINER_NAME',
+    `${appName}-container`,
     join(applicationPath, 'docker-compose.yml')
   )
 
   await replaceConstant(
-    'DATABASE_CONTAINER_NAME',
-    `${appName}-database`,
+    'DATABASE_PROVIDER_DB',
+    `${config.database.provider.toUpperCase()}_DB`,
+    join(applicationPath, 'docker-compose.override.yml')
+  )
+
+  await replaceConstant(
+    'DATABASE_PROVIDER_USER',
+    `${config.database.provider.toUpperCase()}_USER`,
+    join(applicationPath, 'docker-compose.override.yml')
+  )
+
+  await replaceConstant(
+    'DATABASE_PROVIDER_PASSWORD',
+    `${config.database.provider.toUpperCase()}_PASSWORD`,
+    join(applicationPath, 'docker-compose.override.yml')
+  )
+
+  await replaceConstant(
+    'DATABASE_PROVIDER',
+    `${config.database.provider}`,
     join(applicationPath, 'docker-compose.override.yml')
   )
 
   await replaceConstant(
     'DATABASE_IMAGE_VERSION',
     postgresImageVersion,
+    join(applicationPath, 'docker-compose.override.yml')
+  )
+
+  await replaceConstant(
+    'DATABASE_CONTAINER_NAME',
+    `${appName}-database-container`,
     join(applicationPath, 'docker-compose.override.yml')
   )
 }
@@ -85,7 +152,7 @@ const setupDocker = async (appName, applicationPath) => {
 const replaceConstant = async (constant, value, filePath) => {
   const packageContent = await readFile(filePath, 'utf8')
 
-  return writeFile(filePath, packageContent.replace(constant, value))
+  return writeFile(filePath, packageContent.replaceAll(constant, value))
 }
 
 /**
@@ -94,13 +161,23 @@ const replaceConstant = async (constant, value, filePath) => {
  * @param {string} dependencies
  * @returns {Buffer}
  */
-const installDependencies = (dependencies, applicationPath) => {
-  return execSync(`npm i ${dependencies.join(' ')} --prefix ${applicationPath}`)
+const installDependencies = async (dependencies, applicationPath) => {
+  const execPromise = promisify(exec)
+
+  const { stdout, stderr } = await execPromise(`npm i ${dependencies.join(' ')} --prefix ${applicationPath} --quiet`)
+
+  console.log(`${stdout}`)
+
+  if (stderr) {
+    console.error(stderr)
+
+    process.exit(1)
+  }
 }
 
-const getPostgresImageVersion = async () => {
+const getPostgresImageVersion = async (imageName = 'alpine') => {
   const repo = 'library/postgres'
-  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100`
+  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100&name=${imageName}&ordering=last_updated`
 
   try {
     const response = await fetch(url)
@@ -111,27 +188,28 @@ const getPostgresImageVersion = async () => {
     }
 
     // Filter tags that match the pattern X.Y-alpineX.YY
-    const alpineTags = data.results
-      .map(tag => tag.name)
-      .filter(name => /\d+\.\d+-alpine\d+\.\d+/.test(name))
+    const imageVersionRegex = new RegExp(`\\d+\\.\\d+-${imageName}$`, 'g')
 
-    if (alpineTags.length === 0) {
-      throw new Error('No Alpine versions found')
+    const imageTags = data.results
+      .map(tag => tag.name)
+      .filter(name => imageVersionRegex.test(name))
+
+    if (imageTags.length === 0) {
+      throw new Error(`No ${imageName} versions found`)
     }
 
     // Sort versions numerically
-    alpineTags.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+    imageTags.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
 
-    console.log('Latest PostgreSQL Alpine version:', alpineTags[0])
-    return alpineTags[0]
+    return imageTags[0]
   } catch (error) {
     console.error('Error fetching tags:', error)
   }
 }
 
-const getNodeImageVersion = async (nodeVersion) => {
+const getNodeImageVersion = async (nodeVersion, imageName = 'alpine') => {
   const repo = 'library/node'
-  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100`
+  const url = `https://hub.docker.com/v2/repositories/${repo}/tags/?page_size=100&name=${imageName}&ordering=last_updated`
 
   try {
     const response = await fetch(url)
@@ -142,20 +220,20 @@ const getNodeImageVersion = async (nodeVersion) => {
     }
 
     // Filter tags that match the pattern X.Y-alpineX.YY
-    const alpineTags = data.results
-      .map(tag => tag.name)
-      .filter(name => /\d+\.\d+-alpine\d+\.\d+/.test(name))
+    const imageVersionRegex = new RegExp(`${nodeVersion}-${imageName}$`, 'g')
 
-    if (alpineTags.length === 0) {
+    const imageTags = data.results
+      .map(tag => tag.name)
+      .filter(name => imageVersionRegex.test(name))
+
+    if (imageTags.length === 0) {
       throw new Error('No Alpine versions found')
     }
 
     // Sort versions numerically
-    alpineTags.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+    imageTags.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
 
-    return alpineTags.find(version => {
-      return version.includes(nodeVersion)
-    })
+    return imageTags[0]
   } catch (error) {
     console.error('Error fetching tags:', error)
   }
@@ -168,7 +246,5 @@ const getNodeVersion = async () => {
   const response = await fetch('https://nodejs.org/download/release/index.json')
   const versions = await response.json()
 
-  const ltsVersions = versions.filter(version => version.lts)
-
-  return ltsVersions[0].version
+  return versions.filter((version) => version.lts)[0].version.replace(/[a-zA-Z]/g, '')
 }

@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { createFile } from '../../utils/index.js'
@@ -8,21 +8,19 @@ import { createFile } from '../../utils/index.js'
  * @param {string} dirPath
  * @param {string} domain
  */
-export const generateIndex = (dirPath, domain) => {
-  const indexPath = join(dirPath, 'index.js')
+export const generateIndex = (domainName, domainPath) => {
+  const filePath = join(domainPath, 'index.js')
 
-  createFile(indexPath)
-
-  if (existsSync(indexPath)) {
+  if (!existsSync(filePath)) {
     const content = [
-      `export * from './${domain}.controller.js'`,
-      `export * from './${domain}.model.js'`,
-      `export * from './${domain}.routes.js'`,
-      `export * from './${domain}.schema.js'`,
-      `export * from './${domain}.validation.js'`,
+      `export * from './${domainName}.controller.js'`,
+      `export * from './${domainName}.model.js'`,
+      `export * from './${domainName}.routes.js'`,
+      `export * from './${domainName}.schema.js'`,
+      `export * from './${domainName}.validation.js'`,
       ''
     ]
 
-    writeFileSync(indexPath, content.join('\n'))
+    createFile(filePath, content.join('\n'))
   }
 }

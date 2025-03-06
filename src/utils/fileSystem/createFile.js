@@ -1,22 +1,27 @@
 import { existsSync, writeFileSync } from 'node:fs'
 
-import { colorize, GREEN, YELLOW } from '../colorize.js'
+import { colorize, CYAN, YELLOW } from '../colorize.js'
 
 /**
  *
  * @param {string} filePath
+ * @param {boolean} [silence=false]
  * @returns {boolean}
  */
-export const createFile = (filePath) => {
+export const createFile = (filePath, content, silence = false) => {
   if (existsSync(filePath)) {
-    console.log(colorize(`File '${filePath}' already exists. Skipping.`, YELLOW))
+    if (silence === false) {
+      console.log(colorize(`File '${filePath}' already exists. Skipping.`, YELLOW))
+    }
 
     return false
   }
 
-  writeFileSync(filePath, '')
+  writeFileSync(filePath, content)
 
-  console.log(colorize(`File '${filePath}' created.`, GREEN))
+  if (silence === false) {
+    console.log(colorize(`File '${filePath}' created.`, CYAN))
+  }
 
   return true
 }
