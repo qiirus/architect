@@ -9,8 +9,9 @@ export const displayUsage = () => {
   console.log('  Use the specified option to perform actions.\n')
 
   console.log(colorize('Options:', CYAN))
-  console.log(`  ${colorize('-n', YELLOW)}  Generate a new full application. Requires the application name as an argument.`)
-  console.log(`  ${colorize('-d', YELLOW)}  Generate a new domain directory with boilerplate files. Requires the domain path as an argument.\n`)
+  console.log(`  ${colorize('-n, --new', YELLOW)}     Generate a new full application. Requires the application name as an argument.`)
+  console.log(`  ${colorize('-d, --domain', YELLOW)}  Generate a new domain directory with boilerplate files. Requires the domain path as an argument.`)
+  console.log(`  ${colorize('-h, --help', YELLOW)}    Show this help.\n`)
 
   console.log(colorize('Parameters:', CYAN))
   console.log(`  ${colorize('<app-name>', YELLOW)}  The name of the new application to generate.`)

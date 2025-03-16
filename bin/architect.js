@@ -3,25 +3,52 @@
 import {
   displayUsage,
   createApplication,
-  generateDomain
+  generateDomain,
+  RED,
+  colorize
 } from '../src/utils/index.js'
 
 const main = async () => {
+  const validOptions = [
+    '-d',
+    '--domain',
+    '-n',
+    '--new',
+    '-h',
+    '--help'
+  ]
+
   // Parse command-line arguments
   const args = process.argv.slice(2)
   // const args = ['-d', 'users']
   // const args = ['-n', 'rest-api']
 
-  if (args.length < 2) {
+  const option = args[0]
+  const parameter = args[1]
+
+  // if (option === '-h' || option === '--help') {
+  //   displayUsage()
+
+  //   process.exit(0)
+  // }
+
+  if (!validOptions.includes(option)) {
+    console.log(colorize(`Error: Invalid option '${option}'\n`, RED))
+
     displayUsage()
 
     process.exit(1)
   }
 
-  const option = args[0]
-  const parameter = args[1]
+  if (args.length < 2) {
+    console.log(colorize(`Parameter is missing for option '${option}'\n`, RED))
+
+    displayUsage()
+
+    process.exit(1)
+  }
+
   const currentPath = process.cwd()
-  console.log(process.cwd())
   // process.exit(1)
 
   // const currentPath = '/home/aagamezl/workspace/personal/git-repos/rest-flow/experiments/rest-api'
@@ -33,11 +60,13 @@ const main = async () => {
 
   switch (option) {
     case '-d':
+    case '--domain':
       generateDomain(parameter, currentPath)
 
       break
+
     case '-n':
-      // generateApplication(parameter, process.cwd(), import.meta.dirname)
+    case '--new':
       try {
         await createApplication(parameter, currentPath)
       } catch (error) {
@@ -45,8 +74,10 @@ const main = async () => {
       }
 
       break
+
     default:
-      console.log(`Error: Invalid option '${option}'.`)
+      console.log(colorize(`Error: Invalid option '${option}'\n`, RED))
+
       displayUsage()
 
       process.exit(1)
